@@ -8,29 +8,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 
-HWND get_console_hwnd()
-{
-    static constexpr auto SIZE {1024u};
-    char org_title[SIZE];
-    HWND hwnd{0};
-    std::string title;
-
-    ::GetConsoleTitle(org_title, SIZE);
-
-    // Format a "unique" window title
-    std::stringstream sout(title);
-    sout << GetTickCount() << '/' << GetCurrentProcessId();
-
-    ::SetConsoleTitle(title.data());
-    ::Sleep(40);
-
-    hwnd = ::FindWindow(NULL, title.data());
-    ::SetConsoleTitle(org_title);
-
-    std::cout << "Found hWND: " << hwnd << " (" << ::GetConsoleWindow() << ")" << std::endl;
-    return(hwnd);
-}
-
 const WORD get_key(const char* argv)
 {
     static bool use_literal_numbers {false};
@@ -92,31 +69,6 @@ int main(int argc, char* argv[])
 
     if (keysCount == 0)
     {
-        //::SendMessage(get_console_hwnd(), WM_SYSCOMMAND, SC_PREVWINDOW, 0);
-        //::ShowWindow(get_console_hwnd(), SW_MINIMIZE);
-
-        array<char, 1000> text;
-        auto hwnd = ::GetConsoleWindow();
-        //auto hwnd = get_console_hwnd();
-        //auto hwnd = ::GetWindow(get_console_hwnd(), GW_HWNDPREV);
-        //hwnd = ::GetWindow(hwnd, GW_HWNDPREV);
-        ::GetWindowTextA(hwnd, text.data(), (int)text.size());
-        cout << "Activate window: " << text.data() << endl;
-        ::ShowWindow(hwnd, SW_MINIMIZE);
-        //::SendMessage(hwnd, WM_SYSCOMMAND, SC_PREVWINDOW, 0);
-        //::PostMessage(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
-        //::SetActiveWindow(hwnd);
-
-        //array<INPUT, 2> input;
-        //::ZeroMemory(input.data(), 2*sizeof(INPUT));
-        //input[0].type = INPUT_KEYBOARD;
-        //input[0].ki = {VK_TAB, 0};
-        //input[0].type = INPUT_KEYBOARD;
-        //input[0].ki = {VK_TAB, 0, KEYEVENTF_KEYUP};
-        //::SendInput(2, input.data(), sizeof(INPUT));
-
-        ::Sleep(200);
-
         usage();
         return 0;
     }
