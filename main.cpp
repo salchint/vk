@@ -74,6 +74,16 @@ void usage()
     cout << endl;
 }
 
+void move_window_to_background()
+{
+    //auto hwnd = get_console_hwnd();
+    auto hwnd = ::GetConsoleWindow();
+    if (hwnd)
+    {
+        ::ShowWindow(hwnd, SW_MINIMIZE);
+    }
+}
+
 int main(int argc, char* argv[])
 {
     using namespace std;
@@ -92,8 +102,8 @@ int main(int argc, char* argv[])
         //hwnd = ::GetWindow(hwnd, GW_HWNDPREV);
         ::GetWindowTextA(hwnd, text.data(), (int)text.size());
         cout << "Activate window: " << text.data() << endl;
-        ::ShowWindow(hwnd, SW_MAXIMIZE);
-        //::SendMessage(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
+        ::ShowWindow(hwnd, SW_MINIMIZE);
+        //::SendMessage(hwnd, WM_SYSCOMMAND, SC_PREVWINDOW, 0);
         //::PostMessage(hwnd, WM_SYSCOMMAND, SC_RESTORE, 0);
         //::SetActiveWindow(hwnd);
 
@@ -126,6 +136,7 @@ int main(int argc, char* argv[])
         }
     }
 
+    move_window_to_background();
     ::SendInput(keysCount, inputs.data(), sizeof(INPUT));
 
     return 0;
