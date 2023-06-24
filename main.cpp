@@ -8,11 +8,23 @@
 #define WIN32_LEAN_AND_MEAN
 #include "windows.h"
 
-const WORD get_key(const char* argv)
+namespace key_flag
+{
+    enum Value : uint8_t
+    {
+        None,
+        Unicode,
+        Extended,
+        MAX
+    };
+}
+
+const WORD get_key(const char* argv, key_flag::Value& flag)
 {
     static bool use_literal_numbers {false};
 
     bool is_codepoint = true;
+    flag = key_flag::None;
 
     // Check if the input is a literal character or a code point
     const char* pchar = argv;
@@ -33,9 +45,12 @@ const WORD get_key(const char* argv)
 
     if (is_codepoint && !use_literal_numbers)
     {
-        return static_cast<WORD>(std::strtol(argv, nullptr, 10));
+        const auto key = static_cast<WORD>(std::strtol(argv, nullptr, 10));
+        flag = (key >= 0x100) ? key_flag::Extended : key_flag::None;
+        return key;
     }
 
+    flag = key_flag::Unicode;
     return argv[0];
 }
 
@@ -77,18 +92,34 @@ int main(int argc, char* argv[])
 
     for (auto i{0}; i<keysCount; ++i)
     {
-        const WORD key {get_key(argv[i+1])};
+        key_flag::Value flag {key_flag::None};
+        const WORD key {get_key(argv[i+1], flag)};
         if (key)
         {
-            cout << "Sending input: " << key << endl;
             ::ZeroMemory(&(inputs[i]), sizeof(INPUT));
-            inputs[i].ki.wScan = key;
-            inputs[i].ki.dwFlags = KEYEVENTF_UNICODE;
             inputs[i].type = INPUT_KEYBOARD;
+            switch (flag)
+            {
+            case key_flag::Unicode:
+                cout << "Sending unicode input: " << key << endl;
+                inputs[i].ki.wScan = key;
+                inputs[i].ki.dwFlags = KEYEVENTF_UNICODE;
+                break;
+            case key_flag::Extended:
+                cout << "Sending extended input: " << key << endl;
+                inputs[i].ki.wScan = 0xE000 + key;
+                inputs[i].ki.dwFlags = KEYEVENTF_EXTENDEDKEY;
+                break;
+            default:
+                cout << "Sending input: " << key << endl;
+                inputs[i].ki.wVk = key;
+                break;
+            }
         }
     }
 
     move_window_to_background();
+    ::Sleep(1000);
     ::SendInput(keysCount, inputs.data(), sizeof(INPUT));
 
     return 0;
